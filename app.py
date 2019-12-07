@@ -376,7 +376,7 @@ bot.polling()
 #
 # docker in python  https://docker-py.readthedocs.io/en/stable/containers.html
 
-#  docker run -t -i  minzdrav /bin/bash залезть внутрь докера и посмотреть файловую систему внутри
+#  docker run -t -i  name_of_docker /bin/bash залезть внутрь докера и посмотреть файловую систему внутри
 
 
 # http://jira.mt.ru/browse/IT-931 - docker ssh 10.1.240.217
@@ -401,3 +401,4 @@ bot.polling()
 #git add file git commit -m 'message' git push
 # pip3.7 freeze > /Users/andreas/PycharmProjects/med_project_ver2.0/requirements.txt.txt
 # to create docker image you have to enter to Dockerfile dir
+# last
