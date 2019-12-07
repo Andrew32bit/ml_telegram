@@ -399,3 +399,4 @@ bot.polling()
 # pip3.7 list pip3.7 install ....ставим либы
 
 #git add file git commit -m 'message' git push
+# pip3.7 freeze > /Users/andreas/PycharmProjects/med_project_ver2.0/requirements.txt.txt
