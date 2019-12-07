@@ -8,6 +8,7 @@ COPY app.py /add
 COPY dict.xlsx /add
 COPY all.norm-sz100-w10-cb0-it1-min100.w2v /add
 WORKDIR /app
+ADD  . /app
 RUN pip install -r requirements.txt
 CMD ["python3","app.py"]
 
