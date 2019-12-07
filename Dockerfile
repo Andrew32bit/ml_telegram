@@ -3,6 +3,7 @@ RUN apt-get update && apt-get install -y tdsodbc unixodbc-dev && apt-get install
  && apt install unixodbc-bin -y  \
  && apt-get clean -y
 MAINTAINER ANDREW KONSTANTINOV
+COPY data.yaml /add
 COPY requirements.txt /add
 COPY app.py /add
 COPY dict.xlsx /add
