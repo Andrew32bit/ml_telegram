@@ -392,3 +392,10 @@ bot.polling()
 ## TODO sentiment analysis - отдельная команда - на вход эксель с фразами
 # TODO vk ver 2.0 top 10 интересов через запятую /interests
 # fucklouis175
+
+
+# which python3 , alias python='/usr/local/bin/python3.7' , source ~/.bash_profile - это наш интерпертатор
+
+# pip3.7 list pip3.7 install ....ставим либы
+
+#git add file git commit -m 'message' git push
