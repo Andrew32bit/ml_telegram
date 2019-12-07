@@ -1,0 +1,34 @@
+docker build -t sheduleresult .
+docker images
+docker login
+https://github.com/cloudera/impyla/issues/268 resolve dependences of impala connections
+docker rm $(docker ps -a -q)
+docker rmi $(docker images -q)
+docker rmi -f <IMAGE ID>
+
+# Install docker from bash on CentOs https://docs.docker.com/install/linux/docker-ce/centos/
+
+https://habr.com/ru/post/448094/ deploy docker(push to docker hub and deploy on machine)
+
+fix permission issue docker run sudo chmod 666 /var/run/docker.sock
+
+
+docker in python  https://docker-py.readthedocs.io/en/stable/containers.html
+
+docker run -t -i  name_of_docker /bin/bash залезть внутрь докера и посмотреть файловую систему внутри
+
+
+http://jira.mt.ru/browse/IT-931 - docker ssh 10.1.240.217
+
+docker tag ml_tel andreaseuro/ml_tel:0.3  -- коммит в докер хаб
+docker push andreaseuro/ml_tel:0.3 new
+
+
+docker tag rebounder-chain-frontend xpendence/rebounder-chain-frontend:0.0.1
+docker push xpendence/re bounder-chain-frontend:0.0.1
+
+which python3 , alias python='/usr/local/bin/python3.7' , source ~/.bash_profile - это наш интерпертатор
+pip3.7 list pip3.7 install ....ставим либы
+git add file git commit -m 'message' git push
+pip3.7 freeze > /Users/andreas/PycharmProjects/med_project_ver2.0/requirements.txt.txt
+to create docker image you have to enter to Dockerfile dir
