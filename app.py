@@ -22,11 +22,11 @@ bot = telebot.TeleBot(telegram_token)
 
 warnings.filterwarnings("ignore")
 token='86127a0bdd16649ec21fa4b5aff4c0b197d0475a03d04a1cc40fe9725a9cd34bbdc06b44d924160873943'
-#w2v_fpath = "/Users/andreas/Desktop/work_dir/big_work_dir/hacathon_dick/all.norm-sz100-w10-cb0-it1-min100.w2v"# min model #локально
+#w2v_fpath = "/Users/andreas/PycharmProjects/med/ml_telegram/all.norm-sz100-w10-cb0-it1-min100.w2v"# min model #локально
 w2v_fpath="/app/all.norm-sz100-w10-cb0-it1-min100.w2v" #путь для докера
 w2v = gensim.models.KeyedVectors.load_word2vec_format(w2v_fpath, binary=True, unicode_errors='ignore')
 w2v.init_sims(replace=True)
-#df=pd.read_excel('/Users/andreas/Desktop/medic_dir/dict.xlsx') #локально
+#df=pd.read_excel('/Users/andreas/PycharmProjects/med/ml_telegram/dict.xlsx') #локально
 df=pd.read_excel('/app/dict.xlsx') #путь для докера
 dict_interests=df.to_dict('records')
 
@@ -392,3 +392,12 @@ bot.polling()
 ## TODO sentiment analysis - отдельная команда - на вход эксель с фразами
 # TODO vk ver 2.0 top 10 интересов через запятую /interests
 # fucklouis175
+
+
+# which python3 , alias python='/usr/local/bin/python3.7' , source ~/.bash_profile - это наш интерпертатор
+
+# pip3.7 list pip3.7 install ....ставим либы
+
+#git add file git commit -m 'message' git push
+# pip3.7 freeze > /Users/andreas/PycharmProjects/med_project_ver2.0/requirements.txt.txt
+# to create docker image you have to enter to Dockerfile dir
