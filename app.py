@@ -25,7 +25,6 @@ with open('data.yaml', 'r') as f:
     doc = yaml.load(f)
 telegram_token = doc["treeroot"]["telegram_token"]
 token = doc["treeroot"]["vk_token"]
-
 bot = telebot.TeleBot(telegram_token)
 w2v_fpath = "/Users/andreas/PycharmProjects/med/ml_telegram/all.norm-sz100-w10-cb0-it1-min100.w2v"# min model #локально
 #w2v_fpath="/app/all.norm-sz100-w10-cb0-it1-min100.w2v" #путь для докера
@@ -34,6 +33,16 @@ w2v.init_sims(replace=True)
 df=pd.read_excel('/Users/andreas/PycharmProjects/med/ml_telegram/dict.xlsx') #локально
 #df=pd.read_excel('/app/dict.xlsx') #путь для докера
 dict_interests=df.to_dict('records')
+
+text_file = open("/Users/andreas/PycharmProjects/med/ml_telegram/interests_3.txt", "r")#локально
+#text_file = open("/app/interests_3.txt", "r") #путь для докера
+interests_file = text_file.read().split(',')  # интересы лист
+interests_file = [element.strip() for element in interests_file]  # удаляем пробелы
+messages = {
+    "start-message": "/help, чтобы посмотреть список команд",
+    "help-message": '''/user_id - Определение и сравнение извлеченных интересов со словарями
+                    \n/interests - Определение интересов пользователя'''
+}
 
 
 def convert_bbcode_fonts(html):
@@ -167,7 +176,7 @@ def cosine_sim(list_of_interests, interests):
 
 def result(message,user_id):
     if ',' in user_id: # вариант когда несколько id перечислено
-        bot.reply_to(message, "Извлечение интересов из профайлов займет некоторое время,подождите")
+        bot.reply_to(message, "Извлечение интересов и сравнение со словарями займет некоторое время,подождите")
         user_id = user_id.split(',')
         user_id = [int(i) for i in user_id]
         list_of_interests=[]
@@ -290,7 +299,7 @@ def result(message,user_id):
             bot.send_message(message.chat.id, "Произошла ошибка при вводе id {},код ошибки ".format(i) + str(e))
     else:
         try:
-            bot.reply_to(message, "Извлечение интересов займет некоторое время,подождите")
+            bot.reply_to(message, "Извлечение интересов и сравнение со словарями займет некоторое время,подождите")
             list_of_interests = extraction_interests(int(user_id))
             key_dict = []
             result = []
@@ -329,11 +338,58 @@ def result(message,user_id):
         except Exception as e:
             bot.send_message(message.chat.id, "Произошла ошибка при вводе id {},код ошибки ".format(user_id) + str(e))
 
+def interests(message,user_id):
+    bot.reply_to(message, "Вычисление интересов займет некоторое время")
+    if ',' in user_id:
+        user_id = user_id.split(',')
+        user_id = [int(i) for i in user_id]
+        appended_data = []
+        for i in user_id:
+            text_from_groups = extraction_interests(i)
+            if text_from_groups == 0 or len(text_from_groups) == 0:
+                data = [[i, 'Невозможно извлечь интересы']]
+                result = pd.DataFrame(data, columns=['vk_id', 'interests'])
+                appended_data.append(result)
+            else:
+                dict_interests = cosine_sim(text_from_groups, interests_file)
+                data = [[i, dict_interests]]
+                result = pd.DataFrame(data, columns=['vk_id', 'interests'])
+                result['interests'] = result['interests'].astype(str)
+                result['interests'] = result['interests'].apply(lambda x: x.replace('{', '').replace('}', ''))
+                appended_data.append(result)
+        df=pd.concat(appended_data)
+        df['interests'] = df['interests'].apply(lambda x: 'Не удалось извлечь интересы' if x == '0' else x)
+        df.to_excel('result.xlsx', index=False)
+        doc = open('result.xlsx', 'rb')
+        bot.send_document(message.chat.id, doc)
+        os.remove('result.xlsx')
+    else:
+        text_from_groups = extraction_interests(user_id)
+        if text_from_groups == 0 or len(text_from_groups) == 0:
+            bot.reply_to(message, "Не удалось извлечь интересы")
+        else:
+            bot.reply_to(message, "Вычисление интересов займет некоторое время")
+            dict_interests = cosine_sim(text_from_groups, interests_file)
+            data = [[user_id, dict_interests]]
+            result = pd.DataFrame(data, columns=['vk_id', 'interests'])
+            result['interests'] = result['interests'].astype(str)
+            result['interests'] = result['interests'].apply(lambda x: x.replace('{', '').replace('}', ''))
+            result.to_excel('result.xlsx', index=False)
+            doc = open('result.xlsx', 'rb')
+            bot.send_document(message.chat.id, doc)
+            os.remove('result.xlsx')
+
 
 @bot.message_handler(commands=['user_id'])
 def start(message):
-  sent_msg = bot.send_message(message.chat.id, 'Пожалуйста,введите ID для определения интересов')
+  sent_msg = bot.send_message(message.chat.id, 'Пожалуйста,введите ID для определения интересов по словарям')
   bot.register_next_step_handler(sent_msg, hello)
+
+@bot.message_handler(commands=['interests'])
+def start(message):
+  sent_msg = bot.send_message(message.chat.id, 'Пожалуйста,введите ID для определения интересов из списка интересов')
+  bot.register_next_step_handler(sent_msg, hello_2)
+
 
 @bot.message_handler(content_types=["document"])
 def handle_file(message):
@@ -346,17 +402,34 @@ def handle_file(message):
             new_file.write(downloaded_file)
         sent_msg = bot.send_message(message.chat.id, 'Сохраняю и обрабатываю файл')
         df=pd.read_excel(src)
-        id_list=df.id.tolist()
-        id_list=[str(i) for i in id_list]
-        user_id=','.join(id_list)
-        result(message, user_id)
-        os.remove(src)
+        if df.columns[0] == 'id_dict':
+            id_list=df.id_dict.tolist()
+            id_list=[str(i) for i in id_list]
+            user_id=','.join(id_list)
+            result(message, user_id)
+            os.remove(src)
+        elif df.columns[0] == 'id_interests':
+            id_list = df.id_interests.tolist()
+            id_list = [str(i) for i in id_list]
+            user_id = ','.join(id_list)
+            interests(message, user_id)
+            os.remove(src)
+        else:
+            bot.reply_to(message, "Пришлите корректный файл либо с колонкой 'id_dict' ,либо 'id_interests'")
     except Exception as e:
         bot.reply_to(message, e)
 
-def hello(message): # если файл существует-считать сообщение из него
+@bot.message_handler(commands=['help']) # list of commands
+def get_help(message):
+    bot.send_message(message.chat.id, messages["help-message"])
+
+def hello(message): # для словарей
     user_id=message.text
     result(message, user_id)
+
+def hello_2(message): # для интересов
+    user_id=message.text
+    interests(message, user_id)
 bot.polling()
 
 # TODO sentiment analysis - отдельная команда - на вход эксель с фразами
