@@ -26,16 +26,16 @@ with open('data.yaml', 'r') as f:
 telegram_token = doc["treeroot"]["telegram_token"]
 token = doc["treeroot"]["vk_token"]
 bot = telebot.TeleBot(telegram_token)
-w2v_fpath = "/Users/andreas/PycharmProjects/med/ml_telegram/all.norm-sz100-w10-cb0-it1-min100.w2v"# min model #локально
-#w2v_fpath="/app/all.norm-sz100-w10-cb0-it1-min100.w2v" #путь для докера
+#w2v_fpath = "/Users/andreas/PycharmProjects/med/ml_telegram/all.norm-sz100-w10-cb0-it1-min100.w2v"# min model #локально
+w2v_fpath="/app/all.norm-sz100-w10-cb0-it1-min100.w2v" #путь для докера
 w2v = gensim.models.KeyedVectors.load_word2vec_format(w2v_fpath, binary=True, unicode_errors='ignore')
 w2v.init_sims(replace=True)
-df=pd.read_excel('/Users/andreas/PycharmProjects/med/ml_telegram/dict.xlsx') #локально
-#df=pd.read_excel('/app/dict.xlsx') #путь для докера
+#df=pd.read_excel('/Users/andreas/PycharmProjects/med/ml_telegram/dict.xlsx') #локально
+df=pd.read_excel('/app/dict.xlsx') #путь для докера
 dict_interests=df.to_dict('records')
 
-text_file = open("/Users/andreas/PycharmProjects/med/ml_telegram/interests_3.txt", "r")#локально
-#text_file = open("/app/interests_3.txt", "r") #путь для докера
+#text_file = open("/Users/andreas/PycharmProjects/med/ml_telegram/interests_3.txt", "r")#локально
+text_file = open("/app/interests_3.txt", "r") #путь для докера
 interests_file = text_file.read().split(',')  # интересы лист
 interests_file = [element.strip() for element in interests_file]  # удаляем пробелы
 messages = {
@@ -368,7 +368,6 @@ def interests(message,user_id):
         if text_from_groups == 0 or len(text_from_groups) == 0:
             bot.reply_to(message, "Не удалось извлечь интересы")
         else:
-            bot.reply_to(message, "Вычисление интересов займет некоторое время")
             dict_interests = cosine_sim(text_from_groups, interests_file)
             data = [[user_id, dict_interests]]
             result = pd.DataFrame(data, columns=['vk_id', 'interests'])
