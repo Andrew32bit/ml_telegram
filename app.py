@@ -26,16 +26,16 @@ with open('data.yaml', 'r') as f:
 telegram_token = doc["treeroot"]["telegram_token"]
 token = doc["treeroot"]["vk_token"]
 bot = telebot.TeleBot(telegram_token)
-#w2v_fpath = "/Users/andreas/PycharmProjects/med/ml_telegram/all.norm-sz100-w10-cb0-it1-min100.w2v"# min model #локально
-w2v_fpath="/app/all.norm-sz100-w10-cb0-it1-min100.w2v" #путь для докера
+w2v_fpath = "/Users/andreas/PycharmProjects/med/ml_telegram/all.norm-sz100-w10-cb0-it1-min100.w2v"# min model #локально
+#w2v_fpath="/app/all.norm-sz100-w10-cb0-it1-min100.w2v" #путь для докера
 w2v = gensim.models.KeyedVectors.load_word2vec_format(w2v_fpath, binary=True, unicode_errors='ignore')
 w2v.init_sims(replace=True)
-#df=pd.read_excel('/Users/andreas/PycharmProjects/med/ml_telegram/dict.xlsx') #локально
-df=pd.read_excel('/app/dict.xlsx') #путь для докера
+df=pd.read_excel('/Users/andreas/PycharmProjects/med/ml_telegram/dict.xlsx') #локально
+#df=pd.read_excel('/app/dict.xlsx') #путь для докера
 dict_interests=df.to_dict('records')
 
-#text_file = open("/Users/andreas/PycharmProjects/med/ml_telegram/interests_3.txt", "r")#локально
-text_file = open("/app/interests_3.txt", "r") #путь для докера
+text_file = open("/Users/andreas/PycharmProjects/med/ml_telegram/interests_3.txt", "r")#локально
+#text_file = open("/app/interests_3.txt", "r") #путь для докера
 interests_file = text_file.read().split(',')  # интересы лист
 interests_file = [element.strip() for element in interests_file]  # удаляем пробелы
 messages = {
@@ -103,30 +103,12 @@ def create_cosine_simularity(query,w2v_vector):
     return final_cos
 
 def extraction_interests(user_id):
-    extraction='verified, sex, bdate, home_town,online, domain, has_mobile, contacts, site, education,status, last_seen, followers_count, common_count, occupation, nickname, personal, connections, exports, activities, interests, music, movies, tv, books, games, about, quotes, can_post, can_see_all_posts, can_see_audio, can_write_private_message, can_send_friend_request, is_favorite, is_hidden_from_feed,screen_name, is_friend, friend_status, career'
-    url_another='https://api.vk.com/method/users.get?user_id={}&fields={},&v=5.52&access_token={}'.format(user_id,extraction,token) # запарсить интересы
-    page= requests.get(url_another, verify=False, timeout=(10.0, 20))
-    time.sleep(3)
-    data = page.json()
-    inter=data.get('response')[0].get('interests')
-    games=data.get('response')[0].get('games')
-    music=data.get('response')[0].get('music')
-    movies=data.get('response')[0].get('movies')
-    act=data.get('response')[0].get('activities')
-    tv=data.get('response')[0].get('tv')
-    about=data.get('response')[0].get('about')
-    quotes=data.get('response')[0].get('quotes')
-    list_of_interests=[inter,act,tv,about,quotes,games,music,movies]
-    list_of_interests=[i for i in list_of_interests if i!=None and i!='']
-    if len(list_of_interests)==0: # случай если профиль не заполнен - ищем интересы по названию групп
-        print('Interests from titles of groups extracting')
-        print_status='Interests from titles of groups extracting'
-        url='https://api.vk.com/method/groups.get?user_id={}&extended=1,fields=uid&v=5.52&access_token={}'.format(user_id,token) # запарсил стену собственной страницы
-        page= requests.get(url, verify=False, timeout=(10.0, 20)) # allow_redirects (bool)
-        time.sleep(3)
+    try:
+        url='https://api.vk.com/method/groups.get?user_id={}&extended=1,fields=uid&v=5.52&access_token={}'.format(user_id,token)
+        page = requests.get(url, verify=False, timeout=None)
         data = page.json()
         list_dict=[]
-        for k,v in data.items():
+        for k,v in tqdm(data.items()):
             for x,y in v.items():
                 list_dict.append(y)
         new_l=list_dict[1]
@@ -140,8 +122,52 @@ def extraction_interests(user_id):
                 return 0
         text_from_groups=[i for i in final_list if i!='']
         return text_from_groups
-    else:
-        return list_of_interests
+    except Exception as e:
+        return 0
+
+# def extraction_interests(user_id):
+#     extraction='verified, sex, bdate, home_town,online, domain, has_mobile, contacts, site, education,status, last_seen, followers_count, common_count, occupation, nickname, personal, connections, exports, activities, interests, music, movies, tv, books, games, about, quotes, can_post, can_see_all_posts, can_see_audio, can_write_private_message, can_send_friend_request, is_favorite, is_hidden_from_feed,screen_name, is_friend, friend_status, career'
+#     url_another='https://api.vk.com/method/users.get?user_id={}&fields={},&v=5.52&access_token={}'.format(user_id,extraction,token) # запарсить интересы
+#     #page= requests.get(url_another, verify=False, timeout=(1.0, 2))
+#     page = requests.get(url_another, verify=False, timeout=None)
+#     #time.sleep(3)
+#     data = page.json()
+#     inter=data.get('response')[0].get('interests')
+#     games=data.get('response')[0].get('games')
+#     music=data.get('response')[0].get('music')
+#     movies=data.get('response')[0].get('movies')
+#     act=data.get('response')[0].get('activities')
+#     tv=data.get('response')[0].get('tv')
+#     about=data.get('response')[0].get('about')
+#     quotes=data.get('response')[0].get('quotes')
+#     list_of_interests=[inter,act,tv,about,quotes,games,music,movies]
+#     list_of_interests=[i for i in list_of_interests if i!=None and i!='']
+#     if len(list_of_interests)==0: # случай если профиль не заполнен - ищем интересы по названию групп
+#         print('Interests from titles of groups extracting')
+#         print_status='Interests from titles of groups extracting'
+#         url='https://api.vk.com/method/groups.get?user_id={}&extended=1,fields=uid&v=5.52&access_token={}'.format(user_id,token) # запарсил стену собственной страницы
+#         #page= requests.get(url, verify=False, timeout=(1.0, 2)) # allow_redirects (bool)
+#         page = requests.get(url, verify=False, timeout=None)
+#         #time.sleep(3)
+#         data = page.json()
+#         list_dict=[]
+#         for k,v in data.items():
+#             for x,y in v.items():
+#                 list_dict.append(y)
+#         new_l=list_dict[1]
+#         if new_l=='User was deleted or banned':
+#             return 0
+#         final_list=[]
+#         for i in new_l:
+#             try:
+#                 final_list.append(i.get('name'))
+#             except AttributeError:
+#                 return 0
+#         text_from_groups=[i for i in final_list if i!='']
+#         return text_from_groups
+#     else:
+#         return list_of_interests
+
 
 
 def cosine_sim(list_of_interests, interests):
@@ -168,11 +194,13 @@ def cosine_sim(list_of_interests, interests):
             interest_dict.update({i: cosine})
         except ValueError:
             pass
-    top_10 = dict(Counter(interest_dict).most_common(10))
+    # top_10 = dict(Counter(interest_dict).most_common(10))
+    top_10 = dict(Counter(interest_dict).most_common(len(interests_file)))
     if len(top_10) == 0:
         return 0
     else:
         return top_10
+
 
 def result(message,user_id):
     if ',' in user_id: # вариант когда несколько id перечислено
@@ -206,24 +234,8 @@ def result(message,user_id):
             result_full = list(zip(key_id,zip(key_dict, result)))
             df = pd.DataFrame(result_full)
             df.columns = ['id', 'dict']
+            print(df)
             id_list = df.id.unique()
-            # stop
-            # for j in id_list:
-            #     r = pd.DataFrame(list(df[df['id'] == j].dict))
-            #     r.columns = ['name', 'dict']
-            #     if r.dict[0] == 'Невозможно извлечь':
-            #         res_sen['vk_id'] = i
-            #         res_sen['name'] = 'Невозможно определить имя словаря'
-            #         res_sen['dict'] = 'Невозможно посчитать симулярити'
-            #         res_sen['mean_res'] = 'Невозможно посчитать среднее значение'
-            #         final_result = final_result.append(res_sen)
-            #     else:
-            #         r['mean_res'] = r['dict'].apply(lambda x: np.array(list(x.values())).mean())
-            #         max_value = max(r.mean_res)
-            #         res_sen = r[r['mean_res'] == max_value]
-            #         res_sen['vk_id'] = j
-            #         final_result = final_result.append(res_sen)
-            # final_result[['vk_id', 'name', 'dict', 'mean_res']].to_excel('result.xlsx', index=False)
             for j in tqdm(id_list):
                 r = pd.DataFrame(list(df[df['id'] == j].dict))
                 r.columns = ['name', 'dict']
@@ -264,13 +276,13 @@ def result(message,user_id):
                     del res_False['name']
                     del res_False['dict']
                     del res_False['mean_res']
-                    res_False['result'] = 'Не удалось извлечь данные со страницы в вк'
+                    res_False['result'] = 'Не удалось извлечь интересы'
                     full_shit = pd.concat([result_full, res_False]).copy()
                 else:
                     del res_False['name']
                     del res_False['dict']
                     del res_False['mean_res']
-                    res_False['result'] = 'Не удалось извлечь данные со страницы в вк'
+                    res_False['result'] = 'Не удалось извлечь интересы'
                     full_shit=res_False.copy()
             else:
                 res_True = final_result[final_result['name'] != False]
@@ -431,7 +443,10 @@ def hello_2(message): # для интересов
     interests(message, user_id)
 bot.polling()
 
-# TODO sentiment analysis - отдельная команда - на вход эксель с фразами
-# TODO vk ver 2.0 top 10 интересов через запятую /interests
+
+# TODO убрать парсинг личной страницы-оставить только группы
+# TODO извлекать все интересы,а не топ-10
+# TODO изменить dict.xlsx - оставить только колонки M и W
+# TODO в interests_3.txt вбить слова из M и W
 
 
