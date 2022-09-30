@@ -10,7 +10,7 @@ html2text==2019.9.26
 idna==2.8
 jdcal==1.4.1
 jmespath==0.9.4
-joblib==0.14.0
+joblib==1.2.0
 nltk==3.4.5
 numpy==1.17.3
 openpyxl==3.0.1
